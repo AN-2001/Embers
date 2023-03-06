@@ -1,0 +1,80 @@
+[
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++11",
+            "-Wall",
+            "-I.",
+            "-I./glad",
+            "-DEMBERS_DEBUG",
+            "-g",
+            "-I./math",
+            "-o",
+            "program.o",
+            "program.cpp"
+        ],
+        "directory": "/home/amber/projects/embers",
+        "file": "program.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++11",
+            "-Wall",
+            "-I.",
+            "-I./glad",
+            "-DEMBERS_DEBUG",
+            "-g",
+            "-I./math",
+            "-o",
+            "embers.o",
+            "embers.cpp"
+        ],
+        "directory": "/home/amber/projects/embers",
+        "file": "embers.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "glad/glad.o",
+            "embers.o",
+            "shader.o",
+            "program.o",
+            "math/vec3.o",
+            "math/mat4.o",
+            "-std=c++11",
+            "-Wall",
+            "-I.",
+            "-I./glad",
+            "-DEMBERS_DEBUG",
+            "-g",
+            "-I./math",
+            "-o",
+            "embers",
+            "main.cpp"
+        ],
+        "directory": "/home/amber/projects/embers",
+        "file": "main.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++11",
+            "-Wall",
+            "-I.",
+            "-I./glad",
+            "-DEMBERS_DEBUG",
+            "-g",
+            "-I./math",
+            "-o",
+            "shader.o",
+            "shader.cpp"
+        ],
+        "directory": "/home/amber/projects/embers",
+        "file": "shader.cpp"
+    }
+]
