@@ -68,11 +68,22 @@ void PopulateBoard()
     }
 
     Game -> Inner = (GridCell*)malloc(sizeof(*Game -> Inner) * BOARD_SIZE * 6);
-    if (!Game -> Inner)
+    if (!Game -> Inner) {
+        free(Game);
+        EMBERS_ERROR(EMBERS_OUT_OF_MEMORY);
         return;
+    }
 
     /* Load the cached starter position.                                      */
     Positions = ImageRead("./assets/StarterPosition.ppm");
+
+    if (!Positions) {
+        free(Game -> Inner);
+        free(Game);
+        EMBERS_ERROR(EMBERS_CANT_OPEN_FILE);
+        return;
+    }
+
     for (int i = 0; i < 8; i++)
         for (int j = 0; j < 8; j++)
             Board(i, j) = ImageGetPixel(Positions, i, j).r;
@@ -112,7 +123,6 @@ void PopulateBoard()
 
         Game -> Inner[j + 5].Pos[0] = x * GRID_SIZE + GRID_SIZE;
         Game -> Inner[j + 5].Pos[1] = y * GRID_SIZE + GRID_SIZE;
-
     }
 
 }
@@ -120,6 +130,12 @@ void PopulateBoard()
 void PrepBoardBuffers()
 {
     Image *Pieces = ImageRead("./assets/pieces.ppm");
+
+    if (!Pieces) {
+        ChessShutdown();
+        EMBERS_ERROR(EMBERS_CANT_OPEN_FILE);
+        return;
+    }
 
     EMBERS_GL(glGenBuffers(1, &(Game -> VBO)));
     EMBERS_GL(glGenVertexArrays(1, &(Game -> VAO)));
@@ -213,7 +229,6 @@ void ChessInit()
 
     EmbersSetUniformI(Game -> Program, "PieceTexture", CHESS_TEXTURE_PIECES);
     EmbersSetUniformI(Game -> Program, "DataTexture", CHESS_TEXTURE_DATA);
-
 }
 
 void ChessShutdown()
@@ -223,6 +238,7 @@ void ChessShutdown()
     EMBERS_GL(glDeleteBuffers(1, &Game -> VBO));
     EMBERS_GL(glDeleteVertexArrays(1, &Game -> VAO));
     EMBERS_GL(glDeleteTextures(2, Game -> Textures));
+    free(Game);
 }
 
 void ChessDraw()
