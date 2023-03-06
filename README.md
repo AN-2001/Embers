@@ -8,6 +8,7 @@ C++ features are only heavily used to implement math functions.
 
 ## goals
 [ ] Implement Chess.
+
 [ ] Implement Chess AI.
 
 ## TODO
