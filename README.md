@@ -5,6 +5,7 @@ Currently it's running chess.
 
 ## goals
 [ ] Implement Chess.
+
 [ ] Implement Chess AI.
 
 ## TODO
