@@ -17,6 +17,7 @@ extern int EmbersExit;
 extern EmbersStatus EmbersErrno;
 extern int EmbersErrLn;
 extern const char *EmbersErrFl;
+extern const char *EmbersErrFun;
 #define GL_TO_EMBERS(Err) ((EmbersStatus) ((Err - 0x500) | EMBERS_GL_ERROR))
 
 /* Check whether Err is an OpenGL Error.                                      */
@@ -46,6 +47,7 @@ extern const char *EmbersErrFl;
                               EmbersErrno = Error;                             \
                               EmbersErrFl = __FILE__;                          \
 							  EmbersErrLn = __LINE__;                          \
+							  EmbersErrFun = __FUNCTION__;                     \
                               EmbersExit = EMBERS_TRUE;                        \
                             } while(0);                                        \
 

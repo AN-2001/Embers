@@ -35,11 +35,19 @@ static int TryCompile(int Handle, const char *Path)
 	EMBERS_GL(glCompileShader(Handle));
 	glGetShaderiv(Handle, GL_COMPILE_STATUS, &Success);
 	if (!Success){
-		char Msg[2][EMBERS_BUFFER_SIZE];
-		glGetShaderInfoLog(Handle, EMBERS_BUFFER_SIZE / 2, NULL, Msg[0]);
-		sprintf(Msg[1], "Syntax Error in %s\n %s\n", Path, Msg[0]);
-        EMBERS_LOG_ERROR(Msg[1]);
+		char Msg0[EMBERS_BUFFER_SIZE],
+		     Msg1[EMBERS_BUFFER_SIZE_BIG];
+
+		glGetShaderInfoLog(Handle, EMBERS_BUFFER_SIZE, NULL, Msg0);
+		snprintf(Msg1,
+                 EMBERS_BUFFER_SIZE_BIG, 
+                 "Syntax Error in %s\n %s\n",
+                 Path,
+                 Msg0);
+
+        EMBERS_LOG_ERROR(Msg1);
 		EMBERS_ERROR(EMBERS_CANT_COMPILE_SHADER);
+
 		return EMBERS_FALSE;
 	}
 
@@ -81,7 +89,7 @@ EmbersShader EmbersLoadShader(const char *Path, GLenum Type)
 	/* Try to compile the shader in Path.                                     */
 	if (TryCompile(Shader.Handle, Path) != EMBERS_TRUE) {
 	/* Make the shader invalid if we failed.                                  */
-		EMBERS_GL(glDeleteShader(Shader.Handle));
+        EmbersFreeShader(Shader);
 		return Shader;
 	}
 

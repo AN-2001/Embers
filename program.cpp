@@ -40,10 +40,12 @@ int EmbersLinkProgram(EmbersProgram Program)
 
 	/* If we failed output the link error then exit the function.             */
 	if (!Status) {
-		char Msg[EMBERS_BUFFER_SIZE];
-		EMBERS_GL(glGetProgramInfoLog(Program.Handle, EMBERS_BUFFER_SIZE, NULL, Msg));
-		sprintf(Msg, "Link error:\n %s", Msg);
-        EMBERS_LOG_ERROR(Msg);
+		char Msg0[EMBERS_BUFFER_SIZE],
+		     Msg1[EMBERS_BUFFER_SIZE_BIG];
+
+		EMBERS_GL(glGetProgramInfoLog(Program.Handle, EMBERS_BUFFER_SIZE, NULL, Msg0));
+		snprintf(Msg1, EMBERS_BUFFER_SIZE_BIG, "Link error:\n %s", Msg0);
+        EMBERS_LOG_ERROR(Msg0);
 		return EMBERS_FAILURE;
 	}
 	return EMBERS_TRUE;

@@ -12,6 +12,5 @@ C++ features are only heavily used to implement math functions.
 [ ] Implement Chess AI.
 
 ## TODO
-[ ] Fix logging bugs.
 
 [ ] Improve project structure.

@@ -11,6 +11,7 @@
 #include "glad/glad.h"
 #include "embers.h"
 #include <GLFW/glfw3.h>
+#include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
 #include "errors.h"
@@ -21,12 +22,12 @@
 #include "chess.h"
 #include <math.h>
 
-
 /**ERROR HANDLING**************************************************************/
 int EmbersExit = EMBERS_FALSE;
 EmbersStatus EmbersErrno = EMBERS_SUCCESS;
 int EmbersErrLn = 0;
 const char *EmbersErrFl = NULL;
+const char *EmbersErrFun = NULL;
 /******************************************************************************/
 
 /* The embers window.                                                         */
@@ -245,7 +246,9 @@ void EmbersLoop()
         }
 
         LT = CT;
-        EmbersExit |= glfwWindowShouldClose(EmbersWindow);                    
+        EmbersExit |= glfwWindowShouldClose(EmbersWindow) |
+                      EMBERS_IS_BAD_STATE();
+
         glfwSwapBuffers(EmbersWindow);
     }
 
@@ -277,20 +280,14 @@ static const char
 
 static const char
 *EmbersGLErrorTable[] = {
-    "Invalid enum",
-    "Invalid value",
-    "Invalid operation",
-    "stack overflow",
-    "stack underflow",
-    "out of memory",
-    "invalid framebuffer operation",
-    "context lost"
-};
-
-static const char 
-*Formattings[] = {
-    "%s\n",
-    "%s %s %s\n",
+    "Invalid enum.",
+    "Invalid value.",
+    "Invalid operation.",
+    "Stack overflow.",
+    "Stack underflow.",
+    "Out of memory.",
+    "Invalid framebuffer operation.",
+    "Context lost."
 };
 
 static const char *
@@ -304,23 +301,24 @@ void WriteStatus()
 #ifndef EMBERS_DEBUG
     return;
 #endif
+    if (EmbersErrno == EMBERS_SUCCESS) {
+        EMBERS_LOG_INFO("Exiting with no errors.");
+        return;
+    }
 
     /* Determine the type of error then query the right table and fetch the   */
     /* right formatting.                                                      */
     const char * const *Table = Tables[EMBERS_IS_GL(EmbersErrno)];
-    int IsSucc = EmbersErrno == EMBERS_SUCCESS;
-    const char *Formatting = Formattings[!IsSucc];
     int Index = EmbersErrno & (~EMBERS_GL_ERROR);
     char Buff[EMBERS_BUFFER_SIZE];
-
     sprintf(Buff,
-            Formatting,
-            IsSucc ? Table[Index] : EmbersErrFl,
+            "[%s():%s:%d] %s",
+            EmbersErrFun,
+            EmbersErrFl,
             EmbersErrLn,
             Table[Index]);
 
-    EMBERS_LOG_INFO(Buff);
-    EmbersErrno = EMBERS_SUCCESS;
+    EMBERS_LOG_ERROR(Buff);
 }
 
 static void WriteReport()

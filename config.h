@@ -13,6 +13,7 @@
 
 #define EMBERS_REAL float
 #define EMBERS_BUFFER_SIZE (2048)
+#define EMBERS_BUFFER_SIZE_BIG (4096)
 
 #ifdef BOOL
 #undef BOOL

@@ -1,6 +1,6 @@
 cc := g++
 flags :=  -Wall -I. -I./glad         \
-		  -I./math -DEMBERS_DEBUG -g
+		  -I./math #-DEMBERS_DEBUG -g
 
 libs := -lglfw -lGL -lX11  \
 		-lpthread -lXrandr \
