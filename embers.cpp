@@ -127,7 +127,8 @@ static int cpx = -1,
            OldP = 0,
            CurrentTeam = -1;
 
-static int LegalMoves[64][2];
+static unsigned short LegalMoves[1024];
+static int CurrentMove = 0;
 
 static inline int InBounds(int x, int y)
 {
@@ -138,10 +139,50 @@ static inline int GetTeam(int f)
     return (f & CHESS_FLAG_WHITE ? -1 : 1) * (f != 0);
 }
 
+static inline unsigned short PackMoves(unsigned char cpx,
+                                       unsigned char cpy,
+                                       unsigned char x,
+                                       unsigned char y)
+{
+
+    if (!InBounds(x, y) || !InBounds(cpx, cpy))
+        return CHESS_END_MOVES;
+
+    return cpx | (cpy << 3) | (x << 6) | (y << 9);
+}
+
+static inline unsigned short UnpackSx(unsigned short Move)
+{
+    return Move & 0x07;
+}
+
+static inline unsigned short UnpackSy(unsigned short Move)
+{
+    return (Move >> 3) & 0x07;
+}
+
+static inline unsigned short UnpackDx(unsigned short Move)
+{
+    return (Move >> 6) & 0x07;
+}
+
+static inline unsigned short UnpackDy(unsigned short Move)
+{
+    return (Move >> 9) & 0x07;
+}
+
+static inline void PerformMove(unsigned short Move)
+{
+    Board(UnpackDx(Move),
+          UnpackDy(Move)) = Board(UnpackSx(Move),
+                                  UnpackSy(Move));
+
+    Board(UnpackSx(Move), UnpackSy(Move)) = 0;
+}
+
 static void GenerateLegalMoves(int x, int y)
 {
-    int j, k, a, b, Iters, NumMoves, Team,
-        i = 0;
+    int j, k, a, b, Iters, NumMoves, Team;
 
     unsigned char 
         &CellVal = Board(x, y),
@@ -150,45 +191,30 @@ static void GenerateLegalMoves(int x, int y)
     if (!CellVal)
         goto GEN_END;
 
-
     NumMoves = MovesSizes[Type];
     Iters = MovesIterate[Type] ? 8 : 1;
     Team = GetTeam(CellVal);
 
     if (Type << 4 == CHESS_FLAG_PAWN) {
         if (InBounds(x, y + Team) && !Board(x, y + Team)) {
-            LegalMoves[i][0] = x;
-            LegalMoves[i][1] = y + Team;
-            i++;
-        }
+            LegalMoves[CurrentMove++] = PackMoves(x, y, x, y + Team);
 
+            if (InBounds(x, y + Team * 2) && 
+                    !Board(x, y + Team*2) &&
+                    y == (Team == -1 ? 6 : 1))
+                LegalMoves[CurrentMove++] = PackMoves(x, y, x, y + Team * 2);
+
+        }
 
         if (InBounds(x + Team, y + Team) &&
                 Board(x + Team, y + Team) &&
-                GetTeam(Board(x + Team, y + Team)) != Team) {
-
-            LegalMoves[i][0] = x + Team;
-            LegalMoves[i][1] = y + Team;
-            i++;
-        }
+                GetTeam(Board(x + Team, y + Team)) != Team)
+            LegalMoves[CurrentMove++] = PackMoves(x, y, x + Team, y + Team);
 
         if (InBounds(x - Team, y + Team) &&
                 Board(x - Team, y + Team) &&
-                GetTeam(Board(x - Team, y + Team)) != Team) {
-
-            LegalMoves[i][0] = x - Team;
-            LegalMoves[i][1] = y + Team;
-            i++;
-        }
-
-        if (i && InBounds(x, y + Team * 2) && 
-                !Board(x, y + Team*2) &&
-                y == (Team == -1 ? 6 : 1)) {
-
-            LegalMoves[i][0] = x;
-            LegalMoves[i][1] = y + Team * 2;
-            i++;
-        }
+                GetTeam(Board(x - Team, y + Team)) != Team)
+            LegalMoves[CurrentMove++] = PackMoves(x, y, x - Team, y + Team);
 
         goto GEN_END;
     }
@@ -201,9 +227,7 @@ static void GenerateLegalMoves(int x, int y)
             if (!InBounds(x + a, y + b) || GetTeam(Board(x + a, y + b)) == Team) 
                 break;
 
-            LegalMoves[i][0] = x + a;
-            LegalMoves[i][1] = y + b;
-            i++;
+            LegalMoves[CurrentMove++] = PackMoves(x, y, x + a, y + b);
 
             if (Board(x + a, y + b) && GetTeam(Board(x + a, y + b)) != Team)
                 break;
@@ -212,19 +236,16 @@ static void GenerateLegalMoves(int x, int y)
 
 
 GEN_END:
-    LegalMoves[i][0] = -1;
-    LegalMoves[i][1] = -1;
-
+    LegalMoves[CurrentMove] = CHESS_END_MOVES;
 }
 
 static int ChessHandle(int x, int y)
 {
-    for (int i = 0; LegalMoves[i][0] != -1; i++) {
-        if (x != LegalMoves[i][0] || y != LegalMoves[i][1])
+    for (int i = 0; LegalMoves[i] != CHESS_END_MOVES; i++) {
+        if (x != UnpackDx(LegalMoves[i]) || y != UnpackDy(LegalMoves[i]))
             continue;
 
-        Board(x, y) = Board(cpx, cpy);
-        Board(cpx, cpy) = 0;
+        PerformMove(LegalMoves[i]);
         return EMBERS_TRUE;
     }
 
@@ -255,8 +276,9 @@ static void UpdateState(int Tick, EMBERS_REAL Delta)
             if (cpx != -1 && cpy != -1) {
                 Board(cpx, cpy) ^= CHESS_FLAG_HIGHLITED;
 
-                for (int i = 0; LegalMoves[i][0] != -1; i++) {
-                    Board(LegalMoves[i][0], LegalMoves[i][1]) ^= CHESS_FLAG_HIGHLITED;
+                for (int i = 0; LegalMoves[i] != CHESS_END_MOVES; i++) {
+                    Board(UnpackDx(LegalMoves[i]),
+                          UnpackDy(LegalMoves[i])) ^= CHESS_FLAG_HIGHLITED;
                 }
 
                 if (ChessHandle(Tx, Ty))
@@ -266,10 +288,12 @@ static void UpdateState(int Tick, EMBERS_REAL Delta)
             if (cpx == -1 && cpx == - 1 &&
                  GetTeam(Board(Tx, Ty)) == CurrentTeam) {
 
+                CurrentMove = 0;
                 GenerateLegalMoves(Tx, Ty);
 
-                for (int i = 0; LegalMoves[i][0] != -1; i++) {
-                    Board(LegalMoves[i][0], LegalMoves[i][1]) |= CHESS_FLAG_HIGHLITED;
+                for (int i = 0; LegalMoves[i] != CHESS_END_MOVES; i++) {
+                    Board(UnpackDx(LegalMoves[i]),
+                          UnpackDy(LegalMoves[i])) |= CHESS_FLAG_HIGHLITED;
                 }
 
                 Board(Tx, Ty) |= CHESS_FLAG_HIGHLITED;
@@ -283,6 +307,19 @@ static void UpdateState(int Tick, EMBERS_REAL Delta)
             
 
         OldP = P;
+    }
+
+    if (CurrentTeam == 1) {
+        CurrentMove = 0;
+        for (int i = 0; i < 64; i++) {
+            for (int j = 0; j < 64; j++) {
+                if (Board(i, j) & CHESS_FLAG_BLACK)
+                    GenerateLegalMoves(i, j);
+            }
+        }
+
+        PerformMove(LegalMoves[rand() % CurrentMove]);
+        CurrentTeam = -CurrentTeam;
     }
 
 

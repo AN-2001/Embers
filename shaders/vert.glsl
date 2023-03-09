@@ -66,7 +66,7 @@ void main(){
     fColour = Diag % 2 == 0 ? GRID_COL1 / 255.f : GRID_COL2 / 255.f;
 
     if (CheckFlag(Tst, FLAG_HIGHLIGHTED))
-        fColour *= vec3(0.5, 0.5, 0.5);
+        fColour *= vec3(0.3, 0.1, 0.85);
 
     if (CheckFlag(Tst, FLAG_WHITE)) {
         SetUVs(Tst >> 4, 1);

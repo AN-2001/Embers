@@ -10,9 +10,11 @@
 #ifndef MOVES_H
 #define MOVES_H
 
-/* The pawn will be handeled seperately in code as it's very simple.          */
+#define CHESS_END_MOVES (0xffff)
 
-static int 
+/* The pawn is handled differently as it has ALOT more rules.                 */
+
+static char 
     MovesSizes[5] =
         {
             8, /* King.                                                       */
@@ -22,7 +24,7 @@ static int
             4, /* Bishop.                                                     */
         };
 
-static int
+static char
     MovesIterate[5] =
         {
             0, /* King.                                                       */
@@ -32,7 +34,7 @@ static int
             1, /* Bishop.                                                     */
         };
 
-static int
+static char
     MovesTemplates[5][8][2] =
         { 
             {{1, 0}, {-1, 0},

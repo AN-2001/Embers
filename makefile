@@ -1,6 +1,7 @@
 cc := g++
 flags :=  -Wall -Werror -I. -I./glad         \
-		  -I./math  -I./core -I./io -I./core/glad #-DEMBERS_DEBUG -g
+		  -I./math  -I./core -I./io          \
+		  -I./core/glad #-DEMBERS_DEBUG -g
 
 libs := -lglfw -lGL -lX11  \
 		-lpthread -lXrandr \
@@ -14,7 +15,7 @@ obj := main.o           \
 	   math/vec3.o      \
 	   math/mat4.o      \
 	   io/image.o       \
-	   chess.o          \
+	   chess.o
 
 proj := embers
 all: $(proj)
