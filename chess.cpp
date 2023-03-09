@@ -161,8 +161,8 @@ void PrepBoardBuffers()
                    TEXTURE_ONE_CHANNEL);
 
     Game -> Program = EmbersCreateProgram();
-    EmbersShader VertexShader = EmbersLoadShader("vert.glsl", GL_VERTEX_SHADER),
-                 FragmentShader = EmbersLoadShader("frag.glsl", GL_FRAGMENT_SHADER);
+    EmbersShader VertexShader = EmbersLoadShader("./shaders/vert.glsl", GL_VERTEX_SHADER),
+                 FragmentShader = EmbersLoadShader("./shaders/frag.glsl", GL_FRAGMENT_SHADER);
 
     EmbersBindShader(Game -> Program, VertexShader);
     EmbersBindShader(Game -> Program, FragmentShader);

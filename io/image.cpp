@@ -119,10 +119,13 @@ Image *ImageRead(const char *Filename)
         return NULL;
     }
 
-    sprintf(Buff, "Read %s with %u %u %u", Filename,
-                                           HeaderData[0],
-                                           HeaderData[1],
-                                           HeaderData[2]);
+    snprintf(Buff,
+             EMBERS_BUFFER_SIZE,
+             "Read [%s] width=%u height=%u max_Value=%u",
+             Filename,
+             HeaderData[0],
+             HeaderData[1],
+             HeaderData[2]);
 
     EMBERS_LOG_INFO(Buff);
 

@@ -24,6 +24,9 @@ static char *ReadFile(const char *Path);
 static int TryCompile(int Handle, const char *Path)
 {
 	char *Text = ReadFile(Path);
+    if (!Text)
+        return EMBERS_FALSE;
+
 	EMBERS_GL(glShaderSource(Handle,
 				             1,
 				             (const char *const *)&Text,
@@ -62,6 +65,8 @@ static char *ReadFile(const char *Path)
 
 	File = fopen(Path, "r");
 
+    if (!File) return NULL;
+
 	fseek(File, 0, SEEK_END);
 	Size = ftell(File);
 	fseek(File, 0, SEEK_SET);
@@ -89,6 +94,7 @@ EmbersShader EmbersLoadShader(const char *Path, GLenum Type)
 	/* Try to compile the shader in Path.                                     */
 	if (TryCompile(Shader.Handle, Path) != EMBERS_TRUE) {
 	/* Make the shader invalid if we failed.                                  */
+        EMBERS_ERROR(EMBERS_FAILURE);
         EmbersFreeShader(Shader);
 		return Shader;
 	}

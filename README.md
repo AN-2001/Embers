@@ -13,4 +13,3 @@ C++ features are only heavily used to implement math functions.
 
 ## TODO
 
-[ ] Improve project structure.

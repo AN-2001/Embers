@@ -311,7 +311,8 @@ void WriteStatus()
     const char * const *Table = Tables[EMBERS_IS_GL(EmbersErrno)];
     int Index = EmbersErrno & (~EMBERS_GL_ERROR);
     char Buff[EMBERS_BUFFER_SIZE];
-    sprintf(Buff,
+    snprintf(Buff,
+            EMBERS_BUFFER_SIZE,
             "[%s():%s:%d] %s",
             EmbersErrFun,
             EmbersErrFl,
@@ -328,10 +329,11 @@ static void WriteReport()
 #endif
 
     char Buff[EMBERS_BUFFER_SIZE];
-    sprintf(Buff,
-            "FPS: %3d   TPS: %3d",
-            CurrentFPS,
-            CurrentTPS);
+    snprintf(Buff,
+             EMBERS_BUFFER_SIZE,
+             "FPS: %3d   TPS: %3d",
+             CurrentFPS,
+             CurrentTPS);
 
     EMBERS_LOG_INFO(Buff);
 }
