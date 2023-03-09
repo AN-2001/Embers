@@ -21,6 +21,7 @@
 #include "mat4.h"
 #include "chess.h"
 #include <math.h>
+#include "moves.h"
 
 /**ERROR HANDLING**************************************************************/
 int EmbersExit = EMBERS_FALSE;
@@ -121,8 +122,113 @@ static void SetupState()
 
 
 static double MouseX, MouseY;
-int cpx = -1,
-    cpy = -1;
+static int cpx = -1,
+           cpy = -1,
+           OldP = 0;
+
+static int LegalMoves[64][2];
+
+static inline int InBounds(int x, int y)
+{
+    return (x >= 0 && y >= 0 && x < 8 && y < 8);
+}
+static inline int GetTeam(int f) 
+{
+    return (f & CHESS_FLAG_WHITE ? -1 : 1) * (f != 0);
+}
+
+static void GenerateLegalMoves(int x, int y)
+{
+    int j, k, a, b, Iters, NumMoves, Team,
+        i = 0;
+
+    unsigned char 
+        &CellVal = Board(x, y),
+         Type = (CellVal & 0xf0) >> 4;
+
+    if (!CellVal)
+        goto GEN_END;
+
+
+    NumMoves = MovesSizes[Type];
+    Iters = MovesIterate[Type] ? 8 : 1;
+    Team = GetTeam(CellVal);
+
+    if (Type << 4 == CHESS_FLAG_PAWN) {
+        if (InBounds(x, y + Team) && !Board(x, y + Team)) {
+            LegalMoves[i][0] = x;
+            LegalMoves[i][1] = y + Team;
+            i++;
+        }
+
+
+        if (InBounds(x + Team, y + Team) &&
+                Board(x + Team, y + Team) &&
+                GetTeam(Board(x + Team, y + Team)) != Team) {
+
+            LegalMoves[i][0] = x + Team;
+            LegalMoves[i][1] = y + Team;
+            i++;
+        }
+
+        if (InBounds(x - Team, y + Team) &&
+                Board(x - Team, y + Team) &&
+                GetTeam(Board(x - Team, y + Team)) != Team) {
+
+            LegalMoves[i][0] = x - Team;
+            LegalMoves[i][1] = y + Team;
+            i++;
+        }
+
+        if (i && InBounds(x, y + Team * 2) && 
+                !Board(x, y + Team*2) &&
+                y == (Team == -1 ? 6 : 1)) {
+
+            LegalMoves[i][0] = x;
+            LegalMoves[i][1] = y + Team * 2;
+            i++;
+        }
+
+        goto GEN_END;
+    }
+
+
+    for (j = 0; j < NumMoves; j++) {
+        for (k = 0; k < Iters; k++) {
+            a = MovesTemplates[Type][j][0] * (k + 1);
+            b = MovesTemplates[Type][j][1] * (k + 1);
+            if (!InBounds(x + a, y + b) || GetTeam(Board(x + a, y + b)) == Team) 
+                break;
+
+            LegalMoves[i][0] = x + a;
+            LegalMoves[i][1] = y + b;
+            i++;
+
+            if (Board(x + a, y + b) && GetTeam(Board(x + a, y + b)) != Team)
+                break;
+        }
+    }
+
+
+GEN_END:
+    LegalMoves[i][0] = -1;
+    LegalMoves[i][1] = -1;
+
+}
+
+static void ChessHandle(int x, int y)
+{
+
+    for (int i = 0; LegalMoves[i][0] != -1; i++) {
+        if (x != LegalMoves[i][0] || y != LegalMoves[i][1])
+            continue;
+
+        Board(x, y) = Board(cpx, cpy);
+        Board(cpx, cpy) = 0;
+        return;
+    }
+    
+}
 
 static void UpdateState(int Tick, EMBERS_REAL Delta)
 {
@@ -133,34 +239,44 @@ static void UpdateState(int Tick, EMBERS_REAL Delta)
     glfwPollEvents();
     glfwGetCursorPos(EmbersWindow, &MouseX, &MouseY);
 
+    int Tx = MouseX / Zoom - (x + ((EMBERS_WIDTH / 2.f) / Zoom) ),
+        Ty = MouseY / Zoom - (y + ((EMBERS_HEIGHT / 2.f) / Zoom) );
 
-    double Tx = MouseX / Zoom - (x + ((EMBERS_WIDTH / 2.f) / Zoom) ),
-           Ty = MouseY / Zoom - (y + ((EMBERS_HEIGHT / 2.f) / Zoom) );
+    Tx = Tx / (int)(EMBERS_WIDTH / 8),
+    Ty = Ty / (int)(EMBERS_HEIGHT / 8);
 
-    int x_ = Tx / (int)(EMBERS_WIDTH / 8),
-        y_ = Ty / (int)(EMBERS_HEIGHT / 8);
+    int P = glfwGetMouseButton(EmbersWindow, GLFW_MOUSE_BUTTON_1);
 
-    static int OldP = 0,
-               P = glfwGetMouseButton(EmbersWindow, GLFW_MOUSE_BUTTON_1);
-
-    P = glfwGetMouseButton(EmbersWindow, GLFW_MOUSE_BUTTON_1);
-    if (x_ >= 0 && x_ < 8 && y_ >= 0 && y_ < 8) {
-        unsigned char &Flags = Board(x_, y_);
-
+    if (Tx >= 0 && Tx < 8 && Ty >= 0 && Ty < 8) {
         if (P && !OldP) {
-            if (cpy != -1 && (cpy != y_ || cpx != x_)) {
-                Flags = Board(cpx, cpy);
-                Board(cpx, cpy) = 0;
+            if (cpx != -1 && cpy != -1) {
+                Board(cpx, cpy) ^= CHESS_FLAG_HIGHLITED;
 
-                Flags ^= CHESS_FLAG_HIGHLITED;
-                cpx = cpy = -1;
+                for (int i = 0; LegalMoves[i][0] != -1; i++) {
+                    Board(LegalMoves[i][0], LegalMoves[i][1]) ^= CHESS_FLAG_HIGHLITED;
+                }
 
-            } else if (Flags & (CHESS_FLAG_WHITE | CHESS_FLAG_BLACK)) {
-                Flags |= CHESS_FLAG_HIGHLITED;
-                cpx = x_;
-                cpy = y_;
+                ChessHandle(Tx, Ty);
             }
+
+            if (cpx == -1 && cpx == - 1 &&
+                 Board(Tx, Ty) & (CHESS_FLAG_WHITE | CHESS_FLAG_BLACK)) {
+
+                GenerateLegalMoves(Tx, Ty);
+
+                for (int i = 0; LegalMoves[i][0] != -1; i++) {
+                    Board(LegalMoves[i][0], LegalMoves[i][1]) |= CHESS_FLAG_HIGHLITED;
+                }
+
+                Board(Tx, Ty) |= CHESS_FLAG_HIGHLITED;
+                cpx = Tx;
+                cpy = Ty;
+            } else {
+                cpx = cpy = -1;
+            }
+
         }
+            
 
         OldP = P;
     }
