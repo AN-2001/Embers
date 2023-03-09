@@ -7,7 +7,6 @@ The project says C++ but *almost* everything is written in a C style way.
 C++ features are only heavily used to implement math functions.
 
 ## goals
-[ ] Implement Chess.
 
 [ ] Implement Chess AI.
 
