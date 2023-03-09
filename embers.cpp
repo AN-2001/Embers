@@ -124,7 +124,8 @@ static void SetupState()
 static double MouseX, MouseY;
 static int cpx = -1,
            cpy = -1,
-           OldP = 0;
+           OldP = 0,
+           CurrentTeam = -1;
 
 static int LegalMoves[64][2];
 
@@ -216,17 +217,18 @@ GEN_END:
 
 }
 
-static void ChessHandle(int x, int y)
+static int ChessHandle(int x, int y)
 {
-
     for (int i = 0; LegalMoves[i][0] != -1; i++) {
         if (x != LegalMoves[i][0] || y != LegalMoves[i][1])
             continue;
 
         Board(x, y) = Board(cpx, cpy);
         Board(cpx, cpy) = 0;
-        return;
+        return EMBERS_TRUE;
     }
+
+    return EMBERS_FALSE;
     
 }
 
@@ -249,6 +251,7 @@ static void UpdateState(int Tick, EMBERS_REAL Delta)
 
     if (Tx >= 0 && Tx < 8 && Ty >= 0 && Ty < 8) {
         if (P && !OldP) {
+                
             if (cpx != -1 && cpy != -1) {
                 Board(cpx, cpy) ^= CHESS_FLAG_HIGHLITED;
 
@@ -256,11 +259,12 @@ static void UpdateState(int Tick, EMBERS_REAL Delta)
                     Board(LegalMoves[i][0], LegalMoves[i][1]) ^= CHESS_FLAG_HIGHLITED;
                 }
 
-                ChessHandle(Tx, Ty);
+                if (ChessHandle(Tx, Ty))
+                    CurrentTeam = -CurrentTeam;
             }
 
             if (cpx == -1 && cpx == - 1 &&
-                 Board(Tx, Ty) & (CHESS_FLAG_WHITE | CHESS_FLAG_BLACK)) {
+                 GetTeam(Board(Tx, Ty)) == CurrentTeam) {
 
                 GenerateLegalMoves(Tx, Ty);
 
